@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人任务+记账管理系统</title>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --bg-color: #f5f7fa;
+            --card-bg: white;
+            --text-color: #333;
+            --text-secondary: #666;
+            --border-color: #e0e0e0;
+            --success-color: #4caf50;
+            --danger-color: #ff4757;
+            --warning-color: #ff9800;
+            --info-color: #2196f3;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #404040;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            min-height: 500px;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* 待办事项样式 */
+        .todo-input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .todo-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        .todo-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff3742;
+        }
+
+        .todo-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .todo-item:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .todo-item.completed {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .todo-checkbox {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .todo-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* 记账功能样式 */
+        .bill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--card-bg), rgba(102, 126, 234, 0.05));
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+            transition: var(--transition);
+        }
+
+        .stat-value.animate {
+            animation: numberGrow 0.5s ease-out forwards;
+        }
+
+        @keyframes numberGrow {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .category-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 20px;
+        }
+
+        .category-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .category-name {
+            font-size: 14px;
+        }
+
+        .category-percentage {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .bill-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .category-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .category-btn {
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            cursor: pointer;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .category-btn:hover {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .category-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .category-icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .bill-list {
+            margin-top: 30px;
+        }
+
+        .bill-date-group {
+            margin-bottom: 20px;
+        }
+
+        .bill-date-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+        }
+
+        .bill-date-header.today {
+            background: var(--success-color);
+        }
+
+        .bill-date-header.yesterday {
+            background: var(--info-color);
+        }
+
+        .bill-items {
+            background: var(--card-bg);
+            border-radius: 0 0 8px 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .bill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .bill-item:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .bill-item:last-child {
+            border-bottom: none;
+        }
+
+        .bill-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .bill-category-icon {
+            font-size: 24px;
+        }
+
+        .bill-details {
+            flex: 1;
+        }
+
+        .bill-merchant {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .bill-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .bill-amount {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--danger-color);
+            margin-right: 15px;
+        }
+
+        .bill-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .edit-btn:hover {
+            color: var(--info-color);
+        }
+
+        .delete-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .export-section {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            width: 80%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .close {
+            color: var(--text-secondary);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--text-color);
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .category-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .bill-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .export-section {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .bill-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .bill-amount {
+                align-self: flex-end;
+                margin-right: 0;
+            }
+
+            .bill-actions {
+                align-self: flex-end;
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .category-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20% auto;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <div class="theme-toggle" id="themeToggle">
+            🌙
+        </div>
+
+        <div class="header">
+            <h1>个人任务+记账管理系统</h1>
+            <p>高效管理你的任务和财务</p>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="tab active" data-tab="todo">待办事项</div>
+            <div class="tab" data-tab="bills">记账管理</div>
+        </div>
+
+        <div class="tab-content">
+            <!-- 待办事项模块 -->
+            <div class="content-section active" id="todo">
+                <div class="todo-input-section">
+                    <div class="input-container">
+                        <input type="text" class="todo-input" placeholder="输入新任务..." id="todoInput">
+                        <button class="btn btn-primary" id="addTodoBtn">添加</button>
+                    </div>
+                </div>
+                
+                <ul class="todo-list" id="todoList"></ul>
+                
+                <div class="todo-footer">
+                    <span id="taskCount">待办事项: 0</span>
+                    <button class="btn btn-secondary" id="clearCompletedBtn">清空已完成</button>
+                </div>
+            </div>
+
+            <!-- 记账管理模块 -->
+            <div class="content-section" id="bills">
+                <div class="bill-header">
+                    <h2>记账管理</h2>
+                    <button class="btn btn-primary" id="addBillBtn">记一笔</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">今日总支出</div>
+                        <div class="stat-value" id="todayTotal">¥0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">本月累计</div>
+                        <div class="stat-value" id="monthTotal">¥0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日笔数</div>
+                        <div class="stat-value" id="todayCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">最高单笔</div>
+                        <div class="stat-value" id="maxAmount">¥0.00</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">分类统计</div>
+                    <div class="category-stats" id="categoryStats"></div>
+                </div>
+
+                <div class="bill-form" id="billForm">
+                    <h3>添加账单</h3>
+                    <div class="form-group">
+                        <label for="amount">金额</label>
+                        <input type="number" id="amount" step="0.01" placeholder="请输入金额" required>
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <div class="category-buttons">
+                            <div class="category-btn" data-category="餐饮">
+                                <div class="category-icon">🍔</div>
+                                <div>餐饮</div>
+                            </div>
+                            <div class="category-btn" data-category="交通">
+                                <div class="category-icon">🚗</div>
+                                <div>交通</div>
+                            </div>
+                            <div class="category-btn" data-category="购物">
+                                <div class="category-icon">🛍️</div>
+                                <div>购物</div>
+                            </div>
+                            <div class="category-btn" data-category="娱乐">
+                                <div class="category-icon">🎮</div>
+                                <div>娱乐</div>
+                            </div>
+                            <div class="category-btn" data-category="其他">
+                                <div class="category-icon">📦</div>
+                                <div>其他</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="category" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment">支付方式</label>
+                        <select id="payment" required>
+                            <option value="">请选择支付方式</option>
+                            <option value="支付宝">支付宝</option>
+                            <option value="微信">微信</option>
+                            <option value="信用卡">信用卡</option>
+                            <option value="现金">现金</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="merchant">备注</label>
+                        <input type="text" id="merchant" placeholder="请输入备注信息">
+                    </div>
+                    <div class="form-group">
+                        <label for="timestamp">时间</label>
+                        <input type="datetime-local" id="timestamp" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBillBtn">取消</button>
+                        <button type="button" class="btn btn-primary" id="submitBillBtn">提交</button>
+                    </div>
+                </div>
+
+                <div class="bill-list" id="billList"></div>
+
+                <div class="export-section">
+                    <button class="btn btn-primary" id="exportJsonBtn">导出JSON</button>
+                    <button class="btn btn-primary" id="exportCsvBtn">导出CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">编辑账单</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editAmount">金额</label>
+                    <input type="number" id="editAmount" step="0.01" placeholder="请输入金额" required>
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <div class="category-buttons">
+                        <div class="category-btn" data-category="餐饮">
+                            <div class="category-icon">🍔</div>
+                            <div>餐饮</div>
+                        </div>
+                        <div class="category-btn" data-category="交通">
+                            <div class="category-icon">🚗</div>
+                            <div>交通</div>
+                        </div>
+                        <div class="category-btn" data-category="购物">
+                            <div class="category-icon">🛍️</div>
+                            <div>购物</div>
+                        </div>
+                        <div class="category-btn" data-category="娱乐">
+                            <div class="category-icon">🎮</div>
+                            <div>娱乐</div>
+                        </div>
+                        <div class="category-btn" data-category="其他">
+                            <div class="category-icon">📦</div>
+                            <div>其他</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editCategory" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPayment">支付方式</label>
+                    <select id="editPayment" required>
+                        <option value="">请选择支付方式</option>
+                        <option value="支付宝">支付宝</option>
+                        <option value="微信">微信</option>
+                        <option value="信用卡">信用卡</option>
+                        <option value="现金">现金</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editMerchant">备注</label>
+                    <input type="text" id="editMerchant" placeholder="请输入备注信息">
+                </div>
+                <div class="form-group">
+                    <label for="editTimestamp">时间</label>
+                    <input type="datetime-local" id="editTimestamp" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveEditBtn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储管理
+        const BILLS_STORAGE_KEY = 'personalBills';
+        const TASKS_STORAGE_KEY = 'personalTasks';
+        
+        // 全局变量
+        let tasks = [];
+        let bills = [];
+
+        // 初始化数据
+        function initData() {
+            // 初始化账单数据
+            try {
+                const existingBills = localStorage.getItem(BILLS_STORAGE_KEY);
+                if (!existingBills) {
+                    localStorage.setItem(BILLS_STORAGE_KEY, JSON.stringify([]));
+                }
+            } catch (error) {
+                console.error('初始化账单数据失败:', error);
+                localStorage.setItem(BILLS_STORAGE_KEY, JSON.stringify([]));
+            }
+
+            // 初始化任务数据
+            try {
+                const existingTasks = localStorage.getItem(TASKS_STORAGE_KEY);
+                if (!existingTasks) {
+                    localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify([]));
+                }
+            } catch (error) {
+                console.error('初始化任务数据失败:', error);
+                localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify([]));
+            }
+        }
+
+        // 加载账单数据
+        function loadBills() {
+            try {
+                const billsData = localStorage.getItem(BILLS_STORAGE_KEY);
+                bills = billsData ? JSON.parse(billsData) : [];
+            } catch (error) {
+                console.error('加载账单数据失败:', error);
+                bills = [];
+            }
+        }
+
+        // 保存账单数据
+        function saveBills() {
+            try {
+                localStorage.setItem(BILLS_STORAGE_KEY, JSON.stringify(bills));
+            } catch (error) {
+                console.error('保存账单数据失败:', error);
+            }
+        }
+
+        // 加载任务数据
+        function loadTasks() {
+            try {
+                const tasksData = localStorage.getItem(TASKS_STORAGE_KEY);
+                tasks = tasksData ? JSON.parse(tasksData) : [];
+            } catch (error) {
+                console.error('加载任务数据失败:', error);
+                tasks = [];
+            }
+        }
+
+        // 保存任务数据
+        function saveTasks() {
+            try {
+                localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+            } catch (error) {
+                console.error('保存任务数据失败:', error);
+            }
+        }
+
+        // 主题切换
+        function setupThemeToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                body.setAttribute('data-theme', newTheme);
+                themeToggle.textContent = newTheme === 'light' ? '🌙' : '☀️';
+            });
+        }
+
+        // 标签页切换
+        function setupTabSwitching() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有标签的活动状态
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                    
+                    // 添加当前标签的活动状态
+                    tab.classList.add('active');
+                    const tabId = tab.dataset.tab;
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // 如果切换到账单页面，更新统计数据
+                    if (tabId === 'bills') {
+                        updateBillStats();
+                        renderBills();
+                    }
+                });
+            });
+        }
+
+        // 待办事项功能
+        function renderTasks() {
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+            
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = `todo-item ${task.completed ? 'completed' : ''} slide-in`;
+                li.innerHTML = `
+                    <input type="checkbox" class="todo-checkbox" ${task.completed ? 'checked' : ''} data-index="${index}">
+                    <span class="todo-text">${task.text}</span>
+                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 14px;" data-index="${index}">删除</button>
+                `;
+                todoList.appendChild(li);
+            });
+
+            updateTaskCount();
+        }
+
+        // 更新任务数量
+        function updateTaskCount() {
+            const pendingTasks = tasks.filter(task => !task.completed).length;
+            document.getElementById('taskCount').textContent = `待办事项: ${pendingTasks}`;
+        }
+
+        // 添加新任务
+        function addTask() {
+            const todoInput = document.getElementById('todoInput');
+            const text = todoInput.value.trim();
+            if (text) {
+                tasks.push({ text, completed: false });
+                todoInput.value = '';
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        // 切换任务完成状态
+        function toggleTask(index) {
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks();
+            renderTasks();
+        }
+
+        // 删除任务
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveTasks();
+            renderTasks();
+        }
+
+        // 清空已完成任务
+        function clearCompleted() {
+            tasks = tasks.filter(task => !task.completed);
+            saveTasks();
+            renderTasks();
+        }
+
+        // 获取分类图标
+        function getCategoryIcon(category) {
+            const icons = {
+                '餐饮': '🍔',
+                '交通': '🚗',
+                '购物': '🛍️',
+                '娱乐': '🎮',
+                '其他': '📦'
+            };
+            return icons[category] || '📦';
+        }
+
+        // 获取分类颜色
+        function getCategoryColor(category) {
+            const colors = {
+                '餐饮': '#FF6B6B',
+                '交通': '#4ECDC4',
+                '购物': '#45B7D1',
+                '娱乐': '#96CEB4',
+                '其他': '#54A0FF'
+            };
+            return colors[category] || '#95A5A6';
+        }
+
+        // 更新账单统计
+        function updateBillStats() {
+            const today = new Date().toLocaleDateString('zh-CN');
+            const currentMonth = new Date().getMonth();
+            
+            // 今日总支出
+            const todayBills = bills.filter(bill => {
+                return bill.date === today;
+            });
+            const todayTotal = todayBills.reduce((sum, bill) => sum + parseFloat(bill.amount), 0);
+            animateNumber('todayTotal', todayTotal.toFixed(2));
+            
+            // 本月累计
+            const monthBills = bills.filter(bill => {
+                return new Date(bill.timestamp).getMonth() === currentMonth;
+            });
+            const monthTotal = monthBills.reduce((sum, bill) => sum + parseFloat(bill.amount), 0);
+            animateNumber('monthTotal', monthTotal.toFixed(2));
+            
+            // 今日笔数
+            animateNumber('todayCount', todayBills.length);
+            
+            // 最高单笔
+            const maxAmount = Math.max(...bills.map(bill => parseFloat(bill.amount)), 0);
+            animateNumber('maxAmount', maxAmount.toFixed(2));
+            
+            // 分类统计
+            renderCategoryStats();
+        }
+
+        // 数字动画效果
+        function animateNumber(elementId, value) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof value === 'number' ? value : `¥${value}`;
+            element.classList.add('animate');
+            setTimeout(() => {
+                element.classList.remove('animate');
+            }, 500);
+        }
+
+        // 渲染分类统计
+        function renderCategoryStats() {
+            const categoryStats = document.getElementById('categoryStats');
+            
+            // 计算各分类金额
+            const categoryAmounts = {};
+            bills.forEach(bill => {
+                if (!categoryAmounts[bill.category]) {
+                    categoryAmounts[bill.category] = 0;
+                }
+                categoryAmounts[bill.category] += parseFloat(bill.amount);
+            });
+            
+            // 生成分类统计
+            const total = Object.values(categoryAmounts).reduce((sum, amount) => sum + amount, 0);
+            let html = '';
+            
+            if (total > 0) {
+                Object.entries(categoryAmounts).forEach(([category, amount]) => {
+                    const percentage = (amount / total) * 100;
+                    const color = getCategoryColor(category);
+                    const icon = getCategoryIcon(category);
+                    html += `
+                        <div class="category-item">
+                            <span class="bill-category-icon">${icon}</span>
+                            <div class="category-color" style="background-color: ${color};"></div>
+                            <div class="category-name">${category}</div>
+                            <div class="category-percentage">${percentage.toFixed(1)}%</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html = '<p style="text-align: center; color: var(--text-secondary);">暂无数据</p>';
+            }
+            
+            categoryStats.innerHTML = html;
+        }
+
+        // 按日期分组账单
+        function groupBillsByDate() {
+            const grouped = {};
+            const today = new Date().toLocaleDateString('zh-CN');
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toLocaleDateString('zh-CN');
+            
+            bills.forEach(bill => {
+                if (bill.date === today) {
+                    if (!grouped['today']) grouped['today'] = [];
+                    grouped['today'].push(bill);
+                } else if (bill.date === yesterdayStr) {
+                    if (!grouped['yesterday']) grouped['yesterday'] = [];
+                    grouped['yesterday'].push(bill);
+                } else {
+                    if (!grouped['earlier']) grouped['earlier'] = [];
+                    grouped['earlier'].push(bill);
+                }
+            });
+            
+            // 按时间降序排序
+            Object.keys(grouped).forEach(key => {
+                grouped[key].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            });
+            
+            return grouped;
+        }
+
+        // 渲染账单列表
+        function renderBills() {
+            const billList = document.getElementById('billList');
+            billList.innerHTML = '';
+            
+            const groupedBills = groupBillsByDate();
+            
+            // 渲染今日账单
+            if (groupedBills['today'] && groupedBills['today'].length > 0) {
+                const todayGroup = createBillGroup('today', '今天', groupedBills['today']);
+                billList.appendChild(todayGroup);
+            }
+            
+            // 渲染昨天账单
+            if (groupedBills['yesterday'] && groupedBills['yesterday'].length > 0) {
+                const yesterdayGroup = createBillGroup('yesterday', '昨天', groupedBills['yesterday']);
+                billList.appendChild(yesterdayGroup);
+            }
+            
+            // 渲染更早账单
+            if (groupedBills['earlier'] && groupedBills['earlier'].length > 0) {
+                const earlierGroup = createBillGroup('earlier', '更早', groupedBills['earlier']);
+                billList.appendChild(earlierGroup);
+            }
+            
+            // 如果没有账单
+            if (Object.keys(groupedBills).length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.padding = '40px';
+                emptyMessage.style.color = 'var(--text-secondary)';
+                emptyMessage.textContent = '暂无账单记录';
+                billList.appendChild(emptyMessage);
+            }
+        }
+
+        // 创建账单分组
+        function createBillGroup(key, title, bills) {
+            const billDateGroup = document.createElement('div');
+            billDateGroup.className = 'bill-date-group fade-in';
+            
+            // 日期头部
+            const dateHeader = document.createElement('div');
+            dateHeader.className = `bill-date-header ${key}`;
+            dateHeader.textContent = title;
+            billDateGroup.appendChild(dateHeader);
+            
+            // 账单项目
+            const billItems = document.createElement('div');
+            billItems.className = 'bill-items';
+            
+            bills.forEach(bill => {
+                const billItem = document.createElement('div');
+                billItem.className = 'bill-item slide-in';
+                
+                const icon = getCategoryIcon(bill.category);
+                const time = new Date(bill.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                
+                billItem.innerHTML = `
+                    <div class="bill-info">
+                        <span class="bill-category-icon">${icon}</span>
+                        <div class="bill-details">
+                            <div class="bill-merchant">${bill.note || bill.category}</div>
+                            <div class="bill-meta">${time} | ${bill.payment}</div>
+                        </div>
+                    </div>
+                    <div class="bill-amount">¥${parseFloat(bill.amount).toFixed(2)}</div>
+                    <div class="bill-actions">
+                        <button class="action-btn edit-btn" data-id="${bill.id}" title="编辑">✏️</button>
+                        <button class="action-btn delete-btn" data-id="${bill.id}" title="删除">🗑️</button>
+                    </div>
+                `;
+                
+                billItems.appendChild(billItem);
+            });
+            
+            billDateGroup.appendChild(billItems);
+            return billDateGroup;
+        }
+
+        // 添加账单
+        function addBill() {
+            console.log('提交按钮被点击');
+            const amount = document.getElementById('amount').value;
+            const category = document.getElementById('category').value;
+            const payment = document.getElementById('payment').value;
+            const merchant = document.getElementById('merchant').value;
+            const timestamp = document.getElementById('timestamp').value;
+            
+            console.log('表单数据:', { amount, category, payment, merchant, timestamp });
+            
+            if (!amount || !category || !payment || !timestamp) {
+                alert('请填写所有必填项');
+                return;
+            }
+            
+            console.log('开始添加账单');
+            const newBill = {
+                id: Date.now().toString(),
+                amount: parseFloat(amount).toFixed(2),
+                category,
+                payment,
+                note: merchant,
+                timestamp,
+                date: new Date(timestamp).toLocaleDateString('zh-CN')
+            };
+            
+            bills.push(newBill);
+            console.log('账单添加成功，准备保存数据');
+            
+            // 保存数据并更新
+            saveBills();
+            console.log('数据保存成功');
+            updateBillStats();
+            renderBills();
+            
+            // 清空表单
+            document.getElementById('billForm').reset();
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('category').value = '';
+            
+            // 显示成功提示
+            alert('记账成功！');
+            console.log('记账流程完成');
+        }
+
+        // 删除账单
+        function deleteBill(id) {
+            if (confirm('确定删除这条记录吗？')) {
+                bills = bills.filter(bill => bill.id !== id);
+                saveBills();
+                updateBillStats();
+                renderBills();
+                console.log('账单删除成功');
+            }
+        }
+
+        // 打开编辑模态框
+        function openEditModal(id) {
+            const bill = bills.find(b => b.id === id);
+            if (!bill) return;
+            
+            // 填充表单数据
+            document.getElementById('editId').value = bill.id;
+            document.getElementById('editAmount').value = bill.amount;
+            document.getElementById('editCategory').value = bill.category;
+            document.getElementById('editPayment').value = bill.payment;
+            document.getElementById('editMerchant').value = bill.note;
+            document.getElementById('editTimestamp').value = bill.timestamp;
+            
+            // 激活分类按钮
+            document.querySelectorAll('#editForm .category-btn').forEach(btn => {
+                if (btn.dataset.category === bill.category) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // 显示模态框
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // 保存编辑
+        function saveEdit() {
+            const id = document.getElementById('editId').value;
+            const amount = document.getElementById('editAmount').value;
+            const category = document.getElementById('editCategory').value;
+            const payment = document.getElementById('editPayment').value;
+            const merchant = document.getElementById('editMerchant').value;
+            const timestamp = document.getElementById('editTimestamp').value;
+            
+            if (!amount || !category || !payment || !timestamp) {
+                alert('请填写所有必填项');
+                return;
+            }
+            
+            const billIndex = bills.findIndex(b => b.id === id);
+            if (billIndex !== -1) {
+                bills[billIndex] = {
+                    ...bills[billIndex],
+                    amount: parseFloat(amount).toFixed(2),
+                    category,
+                    payment,
+                    note: merchant,
+                    timestamp,
+                    date: new Date(timestamp).toLocaleDateString('zh-CN')
+                };
+                
+                saveBills();
+                updateBillStats();
+                renderBills();
+                closeEditModal();
+                alert('编辑成功！');
+                console.log('账单编辑成功');
+            }
+        }
+
+        // 关闭编辑模态框
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // 导出JSON数据
+        function exportJson() {
+            try {
+                const data = {
+                    bills: bills,
+                    tasks: tasks
+                };
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'personal_management_data.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('导出JSON失败:', error);
+                alert('导出失败，请稍后重试');
+            }
+        }
+
+        // 导出CSV数据
+        function exportCsv() {
+            try {
+                // CSV表头
+                const headers = ['日期', '时间', '分类', '金额', '支付方式', '备注'];
+                const csvContent = [
+                    headers.join(','),
+                    ...bills.map(bill => {
+                        const date = bill.date;
+                        const time = new Date(bill.timestamp).toLocaleTimeString('zh-CN');
+                        return [
+                            date,
+                            time,
+                            bill.category,
+                            bill.amount,
+                            bill.payment,
+                            bill.note || ''
+                        ].join(',');
+                    })
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'personal_management_data.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('导出CSV失败:', error);
+                alert('导出失败，请稍后重试');
+            }
+        }
+
+        // 事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM加载完成，初始化应用...');
+            
+            // 初始化数据
+            initData();
+            loadTasks();
+            loadBills();
+            
+            // 设置主题切换
+            setupThemeToggle();
+            
+            // 设置标签页切换
+            setupTabSwitching();
+            
+            // 渲染初始数据
+            renderTasks();
+            updateBillStats();
+            renderBills();
+            
+            // 添加任务按钮
+            const addTodoBtn = document.getElementById('addTodoBtn');
+            if (addTodoBtn) {
+                addTodoBtn.addEventListener('click', addTask);
+                console.log('添加任务按钮事件绑定成功');
+            }
+            
+            // 按Enter键添加任务
+            const todoInput = document.getElementById('todoInput');
+            if (todoInput) {
+                todoInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addTask();
+                    }
+                });
+                console.log('任务输入框事件绑定成功');
+            }
+            
+            // 任务列表事件委托
+            const todoList = document.getElementById('todoList');
+            if (todoList) {
+                todoList.addEventListener('change', function(e) {
+                    if (e.target.classList.contains('todo-checkbox')) {
+                        const index = parseInt(e.target.dataset.index);
+                        toggleTask(index);
+                    }
+                });
+                
+                todoList.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('btn-danger')) {
+                        const index = parseInt(e.target.dataset.index);
+                        deleteTask(index);
+                    }
+                });
+                console.log('任务列表事件绑定成功');
+            }
+            
+            // 清空已完成按钮
+            const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+            if (clearCompletedBtn) {
+                clearCompletedBtn.addEventListener('click', clearCompleted);
+                console.log('清空已完成按钮事件绑定成功');
+            }
+            
+            // 分类按钮点击
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 找到当前按钮所属的表单
+                    const form = this.closest('.form-group');
+                    if (form) {
+                        form.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        // 找到对应的隐藏输入框
+                        const categoryInput = form.querySelector('input[type="hidden"]');
+                        if (categoryInput) {
+                            categoryInput.value = this.dataset.category;
+                        }
+                    }
+                });
+            });
+            console.log('分类按钮事件绑定成功');
+            
+            // 记账表单
+            const addBillBtn = document.getElementById('addBillBtn');
+            if (addBillBtn) {
+                addBillBtn.addEventListener('click', function() {
+                    document.getElementById('billForm').scrollIntoView({ behavior: 'smooth' });
+                    // 设置默认时间
+                    const now = new Date();
+                    const datetimeLocal = now.toISOString().slice(0, 16);
+                    document.getElementById('timestamp').value = datetimeLocal;
+                    // 自动聚焦金额输入框
+                    document.getElementById('amount').focus();
+                });
+                console.log('记一笔按钮事件绑定成功');
+            }
+            
+            const submitBillBtn = document.getElementById('submitBillBtn');
+            if (submitBillBtn) {
+                submitBillBtn.addEventListener('click', addBill);
+                console.log('提交按钮事件绑定成功');
+            }
+            
+            const cancelBillBtn = document.getElementById('cancelBillBtn');
+            if (cancelBillBtn) {
+                cancelBillBtn.addEventListener('click', function() {
+                    document.getElementById('billForm').reset();
+                    document.querySelectorAll('#billForm .category-btn').forEach(btn => btn.classList.remove('active'));
+                    document.getElementById('category').value = '';
+                });
+                console.log('取消按钮事件绑定成功');
+            }
+            
+            // 账单列表事件委托
+            const billList = document.getElementById('billList');
+            if (billList) {
+                billList.addEventListener('click', function(e) {
+                    // 编辑按钮
+                    if (e.target.classList.contains('edit-btn')) {
+                        const id = e.target.dataset.id;
+                        openEditModal(id);
+                    }
+                    // 删除按钮
+                    if (e.target.classList.contains('delete-btn')) {
+                        const id = e.target.dataset.id;
+                        deleteBill(id);
+                    }
+                });
+                console.log('账单列表事件绑定成功');
+            }
+            
+            // 编辑模态框
+            const closeModal = document.querySelector('.close');
+            if (closeModal) {
+                closeModal.addEventListener('click', closeEditModal);
+            }
+            
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', closeEditModal);
+            }
+            
+            const saveEditBtn = document.getElementById('saveEditBtn');
+            if (saveEditBtn) {
+                saveEditBtn.addEventListener('click', saveEdit);
+            }
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', function(e) {
+                const modal = document.getElementById('editModal');
+                if (e.target === modal) {
+                    closeEditModal();
+                }
+            });
+            
+            // 导出功能
+            const exportJsonBtn = document.getElementById('exportJsonBtn');
+            if (exportJsonBtn) {
+                exportJsonBtn.addEventListener('click', exportJson);
+                console.log('导出JSON按钮事件绑定成功');
+            }
+            
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            if (exportCsvBtn) {
+                exportCsvBtn.addEventListener('click', exportCsv);
+                console.log('导出CSV按钮事件绑定成功');
+            }
+            
+            console.log('所有事件监听器绑定完成');
+        });
+    </script>
+</body>
+</html>
